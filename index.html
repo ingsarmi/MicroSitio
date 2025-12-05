@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cédula Digital Transmoderna</title>
+    <style>
+        /* --- VARIABLES Y CONFIGURACIÓN BASICA --- */
+        :root {
+            --ucundinamarca-dark: #001f17; /* Verde muy oscuro original */
+            --new-blue-dark: #122337;      /* El nuevo azul solicitado */
+            --ucundinamarca-green: #004d40;
+            --ucundinamarca-accent: #00ffc3; /* Cian/Verde neón brillante */
+            --text-white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Gradiente de fondo mezclando el azul solicitado y el verde oscuro */
+            background: linear-gradient(135deg, var(--new-blue-dark) 30%, var(--ucundinamarca-dark) 100%);
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1; /* Asegura que el contenido esté sobre el canvas */
+            overflow-x: hidden;
+        }
+
+        /* --- CANVAS PARA EFECTO MATRIX --- */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Detrás de todo el contenido */
+            opacity: 0.3; /* Ajusta la opacidad para que no distraiga del texto */
+            pointer-events: none;
+        }
+
+        /* --- BANNER SUPERIOR --- */
+        .header-banner {
+            width: 100%;
+            /* Gradiente del banner ajustado con el nuevo azul */
+            background: linear-gradient(90deg, var(--new-blue-dark) 0%, #006853 100%);
+            padding: 30px 20px 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            border-bottom: 3px solid var(--ucundinamarca-accent);
+            position: relative;
+        }
+
+        /* Estilos para el LOGO */
+        .logo-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-logo {
+            /* AJUSTA EL TAMAÑO DESEADO AQUÍ */
+            max-width: 180px; 
+            height: auto;
+            display: block;
+            
+            /* Descomenta la siguiente línea si tu imagen no es blanca 
+               y quieres forzarla a blanco mediante código: */
+            /* filter: brightness(0) invert(1); */
+        }
+
+        .header-title {
+            text-transform: uppercase;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 195, 0.5);
+        }
+
+        .header-subtitle {
+            font-size: 1.2rem;
+            color: var(--ucundinamarca-accent);
+            margin-top: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-content {
+            max-width: 1000px;
+            width: 90%;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        /* --- TARJETA DE TEXTO CENTRAL VISTOSA --- */
+        .recognition-card {
+            /* Efecto vidrio (Glassmorphism) más pronunciado */
+            background: rgba(18, 35, 55, 0.6); /* Usando el azul de base con transparencia */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid var(--ucundinamarca-accent);
+            border-radius: 20px;
+            padding: 50px;
+            margin-bottom: 60px;
+            /* Doble sombra para efecto neón */
+            box-shadow: 0 0 20px rgba(0, 255, 195, 0.2), inset 0 0 20px rgba(0, 255, 195, 0.1);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Pequeño efecto de brillo al pasar el mouse */
+        .recognition-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        .recognition-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 0 40px rgba(0, 255, 195, 0.5);
+        }
+        .recognition-card:hover::before {
+            opacity: 1;
+        }
+
+        .recognition-title {
+            font-size: 2rem;
+            color: var(--ucundinamarca-accent);
+            margin-bottom: 25px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .recognition-text {
+            font-size: 1.25rem;
+            line-height: 1.9;
+            color: #e0e0e0;
+            font-weight: 300;
+        }
+
+        .highlight {
+            color: var(--text-white);
+            font-weight: 600;
+            color: var(--ucundinamarca-accent);
+        }
+
+        /* --- ESPACIO PARA EL GENIALLY --- */
+        .genially-wrapper {
+            width: 100%;
+            margin-top: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            /* Sombra intensa para separarlo del fondo */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid rgba(0, 255, 195, 0.3);
+            background-color: #000;
+        }
+
+        /* Footer simple */
+        footer {
+            margin-top: auto;
+            padding: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-bg"></canvas>
+
+    <header class="header-banner">
+        <div class="logo-container">
+            <img src="logo.png" alt="logo" class="header-logo">
+        </div>
+        
+        <h1 class="header-title">Cédula Digital Transmoderna</h1>
+        <div class="header-subtitle">Universidad de Cundinamarca</div>
+    </header>
+
+    <main class="main-content">
+        
+        <section class="recognition-card">
+            <h2 class="recognition-title">Concesión de Identidad Digital Transhumana</h2>
+            <p class="recognition-text">
+                Se confiere la presente distinción por su sobresaliente desempeño como 
+                <span class="highlight">Agente Actuante y Transformador</span>. 
+                Esta credencial certifica la integración exitosa de capacidades tecnológicas y conciencia humana, 
+                trascendiendo los límites físicos del aprendizaje. Usted es reconocido como un nodo vital y multiplicador del 
+                <span class="highlight">Modelo Educativo Digital Transmoderno (MEDIT)</span>, 
+                forjando el camino hacia una ciudadanía global conectada, innovadora y consciente.
+            </p>
+        </section>
+
+        <section class="genially-wrapper">
+            <div style="width: 100%;">
+                <div style="position: relative; padding-bottom: 56.25%; padding-top: 0; height: 0;">
+                    <iframe title="Copia - 12_pasos_f" frameborder="0" width="1200" height="675" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://view.genially.com/668dccb35b73d400141c7cfc" type="text/html" allowscriptaccess="always" allowfullscreen="true" scrolling="yes" allownetworking="all"></iframe> 
+                </div> 
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        &copy; 2025 Universidad de Cundinamarca - Ecosistema Digital Transmoderno
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        // Ajustar el canvas al tamaño de la ventana
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Caracteres a usar (Hexadecimales para look tecnológico)
+        const chars = '0123456789ABCDEFklmnopqrstuvwxyzΞΦΓ';
+        const charArray = chars.split('');
+
+        const fontSize = 16;
+        let columns = canvas.width / fontSize;
+
+        // Array para guardar la posición Y de cada columna
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * canvas.height / fontSize; // Iniciar en posiciones aleatorias
+        }
+
+        function drawMatrix() {
+            // Pintar el fondo con opacidad baja para crear el efecto de desvanecimiento
+            // Usamos el azul oscuro solicitado (#122337) con mucha transparencia
+            ctx.fillStyle = 'rgba(18, 35, 55, 0.1)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Color del texto (Verde/Cian neón)
+            ctx.fillStyle = '#00ffc3'; 
+            ctx.font = '600 ' + fontSize + 'px monospace';
+
+            // Dibujar los caracteres
+            for (let i = 0; i < drops.length; i++) {
+                // Elegir un caracter aleatorio
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                
+                // Dibujar el caracter en la posición x, y
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                // Enviar la gota de vuelta al inicio aleatoriamente después de salir de la pantalla
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.985) {
+                    drops[i] = 0;
+                }
+                // Mover la gota hacia abajo
+                drops[i]++;
+            }
+        }
+
+        // Velocidad de la animación (en milisegundos)
+        setInterval(drawMatrix, 40);
+
+    </script>
+
+</body>
+</html>
